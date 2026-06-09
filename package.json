@@ -1,0 +1,30 @@
+{
+  "name": "apple-music-linux",
+  "version": "1.0.0",
+  "description": "Apple Music desktop client for Linux",
+  "author": {
+    "name": "congrak",
+    "email": "rodricelis@gmail.com"
+  },
+  "main": "main.js",
+  "scripts": {
+    "start": "electron . --no-sandbox --ozone-platform-hint=auto --enable-features=WaylandWindowDecorations",
+    "build": "electron-builder"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "https://github.com/castlabs/electron-releases#v42.3.3+wvcus",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.congrak.applemusic",
+    "productName": "Apple Music",
+    "electronDist": "node_modules/electron/dist",
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Audio"
+    }
+  }
+}
