@@ -6,6 +6,9 @@ app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app.commandLine.appendSwitch('no-sandbox');
+app.commandLine.appendSwitch('disable-gpu-sandbox');
+app.commandLine.appendSwitch('disable-namespace-sandbox');
+app.commandLine.appendSwitch('disable-setuid-sandbox');
 
 let mainWindow;
 
@@ -31,10 +34,27 @@ function createWindow() {
 
   powerSaveBlocker.start('prevent-app-suspension');
 
-  mainWindow.webContents.setUserAgent(
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
-  );
-  mainWindow.loadURL('https://beta.music.apple.com');
+  const realUA = mainWindow.webContents.getUserAgent();
+  const cleanUA = realUA.replace(/\s*Electron\/\S+/i, '').replace(/\s{2,}/g, ' ').trim();
+  mainWindow.webContents.setUserAgent(cleanUA);
+
+  mainWindow.loadURL('https://music.apple.com');
+
+  // TEMPORAL: para diagnosticar la pantalla negra. Quita esta línea
+  // cuando ya funcione todo.
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
+
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error('❌ did-fail-load:', errorCode, errorDescription, validatedURL);
+  });
+
+  mainWindow.webContents.on('render-process-gone', (event, details) => {
+    console.error('❌ render-process-gone:', details);
+  });
+
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    console.log('📄 page console:', message);
+  });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (
@@ -96,14 +116,31 @@ function createWindow() {
   });
 }
 
-// ─── Wait for Widevine CDM to be ready before creating the window ───
-app.whenReady().then(async () => {
-  try {
-    await components.whenReady();
-    console.log('✅ Widevine CDM ready:', components.status());
-  } catch (err) {
-    console.error('⚠️  Widevine CDM init warning:', err.message);
+// ─── Esperar a que el CDM de Widevine esté listo antes de crear la ventana ───
+// La instalación del componente es intermitente en algunos sistemas (falla
+// de red temporal, condición de carrera en el primer arranque). Reintentamos
+// varias veces con una pequeña espera antes de rendirnos.
+async function ensureWidevine(maxAttempts = 4) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await components.whenReady();
+      const status = components.status();
+      if (status && status.widevine && status.widevine.version) {
+        console.log(`✅ Widevine CDM listo (intento ${attempt}):`, status.widevine.version);
+        return true;
+      }
+      console.warn(`⚠️  Intento ${attempt}/${maxAttempts}: Widevine no reporta versión instalada todavía.`);
+    } catch (err) {
+      console.warn(`⚠️  Intento ${attempt}/${maxAttempts} falló:`, err.message);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
   }
+  console.error('❌ No se pudo instalar Widevine tras varios intentos. La app abrirá igual, pero probablemente veas solo previews de 30s-1min hasta que el CDM se instale.');
+  return false;
+}
+
+app.whenReady().then(async () => {
+  await ensureWidevine();
   createWindow();
 });
 

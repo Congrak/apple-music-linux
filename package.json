@@ -8,15 +8,13 @@
   },
   "main": "main.js",
   "scripts": {
-    "start": "electron . --no-sandbox --ozone-platform-hint=auto --enable-features=WaylandWindowDecorations",
-    "build": "electron-builder"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "electron": "https://github.com/castlabs/electron-releases#v42.3.3+wvcus",
-    "electron-builder": "^26.8.1"
+    "start": "electron . --no-sandbox --disable-gpu-sandbox --disable-namespace-sandbox --disable-setuid-sandbox --no-zygote",
+    "dist": "electron-builder --linux snap"
   },
   "build": {
+    "electronDownload": {
+      "mirror": "https://github.com/castlabs/electron-releases/releases/download/v"
+    },
     "appId": "com.congrak.applemusic",
     "productName": "Apple Music",
     "electronDist": "node_modules/electron/dist",
@@ -26,5 +24,9 @@
       ],
       "category": "Audio"
     }
+  },
+  "devDependencies": {
+    "electron": "https://github.com/castlabs/electron-releases#v42.3.3+wvcus",
+    "electron-builder": "^22.7.0"
   }
 }
