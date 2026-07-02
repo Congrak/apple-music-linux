@@ -9,7 +9,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron . --no-sandbox --disable-gpu-sandbox --disable-namespace-sandbox --disable-setuid-sandbox --no-zygote",
-    "dist": "electron-builder --linux snap"
+    "dist": "electron-builder --linux AppImage"
   },
   "build": {
     "electronDownload": {
