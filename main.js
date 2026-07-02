@@ -9,7 +9,7 @@ app.commandLine.appendSwitch('no-sandbox');
 app.commandLine.appendSwitch('disable-gpu-sandbox');
 app.commandLine.appendSwitch('disable-namespace-sandbox');
 app.commandLine.appendSwitch('disable-setuid-sandbox');
-
+app.commandLine.appendSwitch('force-device-scale-factor', '1');
 let mainWindow;
 
 function createWindow() {
@@ -39,10 +39,6 @@ function createWindow() {
   mainWindow.webContents.setUserAgent(cleanUA);
 
   mainWindow.loadURL('https://music.apple.com');
-
-  // TEMPORAL: para diagnosticar la pantalla negra. Quita esta línea
-  // cuando ya funcione todo.
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
 
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
     console.error('❌ did-fail-load:', errorCode, errorDescription, validatedURL);
@@ -116,10 +112,6 @@ function createWindow() {
   });
 }
 
-// ─── Esperar a que el CDM de Widevine esté listo antes de crear la ventana ───
-// La instalación del componente es intermitente en algunos sistemas (falla
-// de red temporal, condición de carrera en el primer arranque). Reintentamos
-// varias veces con una pequeña espera antes de rendirnos.
 async function ensureWidevine(maxAttempts = 4) {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
