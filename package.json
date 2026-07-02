@@ -6,9 +6,10 @@
     "name": "congrak",
     "email": "rodricelis@gmail.com"
   },
+  "repository": "https://github.com/Congrak/apple-music-linux.git",
   "main": "main.js",
   "scripts": {
-    "start": "electron . --no-sandbox --disable-gpu-sandbox --disable-namespace-sandbox --disable-setuid-sandbox --no-zygote",
+    "start": "electron . --no-sandbox --disable-gpu-sandbox --disable-namespace-sandbox --disable-setuid-sandbox --no-zygote --ozone-platform-hint=auto",
     "dist": "electron-builder --linux AppImage"
   },
   "build": {

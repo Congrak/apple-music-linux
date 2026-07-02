@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, Menu, powerSaveBlocker, components } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Menu, powerSaveBlocker, components, screen } = require('electron');
 const path = require('path');
 
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
@@ -9,15 +9,18 @@ app.commandLine.appendSwitch('no-sandbox');
 app.commandLine.appendSwitch('disable-gpu-sandbox');
 app.commandLine.appendSwitch('disable-namespace-sandbox');
 app.commandLine.appendSwitch('disable-setuid-sandbox');
-app.commandLine.appendSwitch('force-device-scale-factor', '1');
+app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
+
 let mainWindow;
 
 function createWindow() {
+  const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
+
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 780,
-    minWidth: 800,
-    minHeight: 600,
+    width: screenW,
+    height: screenH,
+    minWidth: 1000,
+    minHeight: 650,
     frame: false,
     backgroundColor: '#000000',
     webPreferences: {
@@ -29,28 +32,30 @@ function createWindow() {
       partition: 'persist:applemusic',
       webSecurity: true,
     },
-    icon: path.join(__dirname, 'icon.png'),
+    icon: path.join(__dirname, 'apple-music-for-linux.png'),
   });
 
+  mainWindow.maximize();
+
   powerSaveBlocker.start('prevent-app-suspension');
+
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.control && input.type === 'keyDown') {
+      if (input.key === '=' || input.key === '+') {
+        mainWindow.webContents.setZoomFactor(mainWindow.webContents.getZoomFactor() + 0.1);
+      } else if (input.key === '-') {
+        mainWindow.webContents.setZoomFactor(Math.max(0.5, mainWindow.webContents.getZoomFactor() - 0.1));
+      } else if (input.key === '0') {
+        mainWindow.webContents.setZoomFactor(1.0);
+      }
+    }
+  });
 
   const realUA = mainWindow.webContents.getUserAgent();
   const cleanUA = realUA.replace(/\s*Electron\/\S+/i, '').replace(/\s{2,}/g, ' ').trim();
   mainWindow.webContents.setUserAgent(cleanUA);
 
   mainWindow.loadURL('https://music.apple.com');
-
-  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-    console.error('❌ did-fail-load:', errorCode, errorDescription, validatedURL);
-  });
-
-  mainWindow.webContents.on('render-process-gone', (event, details) => {
-    console.error('❌ render-process-gone:', details);
-  });
-
-  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
-    console.log('📄 page console:', message);
-  });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (
@@ -127,7 +132,7 @@ async function ensureWidevine(maxAttempts = 4) {
     }
     await new Promise((resolve) => setTimeout(resolve, 1500));
   }
-  console.error('❌ No se pudo instalar Widevine tras varios intentos. La app abrirá igual, pero probablemente veas solo previews de 30s-1min hasta que el CDM se instale.');
+  console.error('❌ No se pudo instalar Widevine tras varios intentos.');
   return false;
 }
 
