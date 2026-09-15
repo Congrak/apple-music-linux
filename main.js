@@ -1,5 +1,7 @@
-const { app, BrowserWindow, ipcMain, shell, Menu, powerSaveBlocker, components, screen } = require('electron');
+const { app, BrowserWindow, shell, powerSaveBlocker, components, screen, nativeTheme } = require('electron');
 const path = require('path');
+
+nativeTheme.themeSource = 'dark';
 
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-timer-throttling');
@@ -22,7 +24,8 @@ function createWindow() {
     minWidth: 1000,
     minHeight: 650,
     frame: false,
-    backgroundColor: '#000000',
+    transparent: true,
+    backgroundColor: '#00000000',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -31,6 +34,7 @@ function createWindow() {
       autoplayPolicy: 'no-user-gesture-required',
       partition: 'persist:applemusic',
       webSecurity: true,
+      preferredColorScheme: 'dark',
     },
     icon: path.join(__dirname, 'apple-music-for-linux.png'),
   });
@@ -103,11 +107,7 @@ function createWindow() {
         border-bottom: 1px solid rgba(255,255,255,0.08);
       \`;
       bar.innerHTML = \`
-        <div style="display:flex;align-items:center;gap:8px;-webkit-app-region:no-drag;">
-          <button onclick="window.__wc('close')"  style="width:13px;height:13px;border-radius:50%;background:#ff5f57;border:none;cursor:pointer;"></button>
-          <button onclick="window.__wc('min')"    style="width:13px;height:13px;border-radius:50%;background:#febc2e;border:none;cursor:pointer;"></button>
-          <button onclick="window.__wc('max')"    style="width:13px;height:13px;border-radius:50%;background:#28c840;border:none;cursor:pointer;"></button>
-        </div>
+        <div style="width:60px;"></div>
         <div style="font-size:12px;color:rgba(255,255,255,0.5);font-family:sans-serif;letter-spacing:0.3px;">Apple Music</div>
         <div style="width:60px;"></div>
       \`;
@@ -149,9 +149,3 @@ app.on('activate', () => {
   if (mainWindow === null) createWindow();
 });
 
-ipcMain.on('wc', (_, action) => {
-  if (!mainWindow) return;
-  if (action === 'close') mainWindow.close();
-  if (action === 'min') mainWindow.minimize();
-  if (action === 'max') mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
-});
